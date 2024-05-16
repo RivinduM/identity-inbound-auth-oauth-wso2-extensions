@@ -110,7 +110,10 @@ public class DefaultIDTokenBuilder implements org.wso2.carbon.identity.openidcon
                                OAuth2AccessTokenRespDTO tokenRespDTO) throws IdentityOAuth2Exception {
         String clientId = tokenReqMsgCtxt.getOauth2AccessTokenReqDTO().getClientId();
         String spTenantDomain = getSpTenantDomain(tokenReqMsgCtxt);
-        String idTokenIssuer = OAuth2Util.getIdTokenIssuer(spTenantDomain);
+        String requestURL = tokenReqMsgCtxt.getOauth2AccessTokenReqDTO().getHttpServletRequestWrapper()
+                .getRequestURL().toString();
+        String idTokenIssuer = OAuth2Util.isMtlsRequest(requestURL) ? OAuth2Util.OAuthURL.getOAuth2MTLSTokenEPUrl() :
+                OAuth2Util.getIdTokenIssuer(spTenantDomain);
         String accessToken = tokenRespDTO.getAccessToken();
         JWSAlgorithm idTokenSignatureAlgorithm = signatureAlgorithm;
 
@@ -241,7 +244,10 @@ public class DefaultIDTokenBuilder implements org.wso2.carbon.identity.openidcon
         String accessToken = tokenRespDTO.getAccessToken();
         String clientId = authzReqMessageContext.getAuthorizationReqDTO().getConsumerKey();
         String spTenantDomain = getSpTenantDomain(authzReqMessageContext);
-        String issuer = OAuth2Util.getIdTokenIssuer(spTenantDomain);
+        Object isMtls = authzReqMessageContext.getProperty(OAuthConstants.IS_MTLS_REQUEST);
+        boolean isMtlsRequest = isMtls != null && Boolean.parseBoolean(isMtls.toString());
+        String issuer = isMtlsRequest ? OAuth2Util.OAuthURL.getOAuth2MTLSTokenEPUrl() :
+                OAuth2Util.getIdTokenIssuer(spTenantDomain);
         JWSAlgorithm idTokenSignatureAlgorithm = signatureAlgorithm;
 
         // Initialize OAuthAppDO using the client ID.
